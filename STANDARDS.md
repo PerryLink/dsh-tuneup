@@ -36,7 +36,7 @@ never emits a score, and never turns a grade into a level.
 | Doctor group | Checks | What it contributes to ENTRY | Strength |
 |---|---|---|---|
 | **R** static · package structure | R0–R8 | manifest, entry and `dsh.bundle.patch` shape (G0/G1), peer/dependency eligibility (G2), artifact loadability | static |
-| **K** static · Cordis contract scan | K1–K14 | Cordis contract heuristics that predict boot/activation problems (G1/G3-adjacent) | static, heuristic |
+| **K** static · Cordis contract scan | K1–K16 | Cordis contract heuristics that predict boot/activation problems (G1/G3-adjacent) | static, heuristic |
 | **D** dynamic · sandbox smoke | D0–D3, D9 | real `npm pack` → `dsh plugin add` → `--dump-config` → keyless headless boot (G0/G1/G3) | runtime |
 | **X** host contract | X1–X5 | peer corridor with the host's own evaluator, `inject` service surface, patch-row locatability (G2/G3-adjacent) | static, supplementary |
 | **CC** ecosystem · listings | CC1–CC5 | nothing — listings are not package compatibility | — |

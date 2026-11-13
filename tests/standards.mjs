@@ -57,6 +57,17 @@ const run = (spec) => {
   return { results, groups, standards: deriveStandards(results, groups) }
 }
 
+// ── 0. info 是建议级：计入六值计数，但不把分组/ENTRY 抬成 warn/failed ──────
+test('info 是建议级：K 组仍为 pass，counts.info 保留', () => {
+  const { standards } = run({
+    R: [['R0', 'pass'], ['R1', 'pass']],
+    K: [['K1', 'pass'], ['K16', 'info']],
+  })
+  assert.equal(standards.levels.entry.status, 'static')
+  assert.equal(standards.levels.entry.evidence.K.counts.info, 1)
+  assert.equal(standards.levels.entry.evidence.K.status, 'pass')
+})
+
 // ── 1. runtime：R/K 有实跑项 + D0–D3 全跑且无 fail/error ───────────────────
 test('runtime：R/K 实跑 + D0–D3 实跑 + 无 fail/error ⇒ entry.status = runtime', () => {
   const { standards } = run(CLEAN_RUNTIME)

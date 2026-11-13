@@ -59,6 +59,13 @@ const v = verdict(allSkip, { degraded })
 check('verdict.ok 不因降级而 false（故渲染是唯一出口）', v.ok === true, `worst=${v.worst}`)
 check('verdict 携带 degraded 列表', v.degraded.includes('X'))
 
+// 回归：warn 排在 skip 之后时不得被吞掉（否则汇总行显示 SKIP，而报告里有 [WARN]）。
+const warnAfterSkip = verdict([
+  { name: 'skip first', status: 'skip' },
+  { name: 'warn second', status: 'warn' },
+])
+check('warn 在 skip 之后仍是最坏状态', warnAfterSkip.worst === 'warn', `worst=${warnAfterSkip.worst}`)
+
 const familyWorkspace = pluginRepoDirs(path.dirname(ROOT)).length >= 2
 if (familyWorkspace) {
 // ── 观测 2：工作区定位 —— 不编造路径，且能从被检仓向上找到真工作区 ─────────

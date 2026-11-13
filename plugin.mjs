@@ -37,7 +37,7 @@ const NO_WORKSPACE_NOTE = '未能定位家族工作区（既没有 workspace 参
   + '需要核对时用 plugin_doctor 的 workspace 参数指定家族工作区目录。'
 
 /** 静态 R/K 组（默认）+ X 宿主契约组 + 可选 D 组冒烟，返回脱敏后的结构化报告。 */
-async function runDoctor(repoPath, { smoke = false, host = true, workspace = null } = {}) {
+async function runDoctor(repoPath, { smoke = false, host = true, workspace = null, nestedActivation = true, thinking = true } = {}) {
   const abs = path.resolve(repoPath)
   const pkgPath = path.join(abs, 'package.json')
   if (!existsSync(pkgPath)) return { ok: false, error: `未找到 ${pkgPath}` }
@@ -70,6 +70,8 @@ async function runDoctor(repoPath, { smoke = false, host = true, workspace = nul
     dshInstall,
     dshInstallVersion,
     hostVersions: [],
+    nestedActivation,
+    thinking,
   }
 
   const doctor = new Doctor()
@@ -124,6 +126,8 @@ export function apply(ctx) {
           smoke: { type: 'boolean', description: '是否额外执行 D 组沙箱冒烟（默认 false；需网络 + pnpm）' },
           host: { type: 'boolean', description: '是否执行 X 组宿主契约检查（默认 true；需要能读到一份 dsh 安装，读不到则该组降级）' },
           workspace: { type: 'string', description: '家族工作区目录（含多个 dsh-* 插件仓的父目录），用于 CC1–CC5 集合站清单与 K14 跨仓重名；默认自动从被检仓向上定位，也可用 DSH_WORKSPACE 环境变量' },
+          nestedActivation: { type: 'boolean', description: '是否执行 K15 嵌套 activation spec 检查（默认 true；对应 CLI 的 --no-nested-activation）' },
+          thinking: { type: 'boolean', description: '是否执行 K16 思考模式下 temperature/top_p 误用检查（默认 true；对应 CLI 的 --no-thinking）' },
         },
         required: ['repo'],
       },
@@ -138,6 +142,8 @@ export function apply(ctx) {
           smoke: !!args.smoke,
           host: args.host !== false,
           workspace: typeof args.workspace === 'string' ? args.workspace : null,
+          nestedActivation: args.nestedActivation !== false,
+          thinking: args.thinking !== false,
         })
         if (!r.ok && r.error) return `检查失败: ${r.error}`
         return withNotes(r.report, r.notes ?? [])

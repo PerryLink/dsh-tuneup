@@ -94,9 +94,10 @@ const declaredCritical = [...(readme.match(/\*\*`critical`\*\*\s*—\s*currently
 // headings, so a check deleted from the spec still fails this test.
 assert('SPEC §4 解析出检测项 ID', declaredIds.length > 0, `declared=${declaredIds.length}`)
 assert(
-  // 28 → 33 with the five cross-plugin / cross-repo checks K10–K14.
-  'SPEC §4 覆盖全部四组（33 项）',
-  declaredIds.length === 33,
+  // 28 → 33 with the five cross-plugin / cross-repo checks K10–K14;
+  // 33 → 35 with the two host-migration heuristics K15–K16.
+  'SPEC §4 覆盖全部四组（35 项）',
+  declaredIds.length === 35,
   `declared=${declaredIds.length}`,
 )
 

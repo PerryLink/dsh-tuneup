@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-clinic-hero-zh-dark.webp">
-  <img src="docs/assets/dsh-clinic-hero-zh-light.webp" width="100%" alt="dsh-clinic：一次运行验收一个 DSH 插件——包结构、cordis 契约、沙箱冒烟与集合站清单，结论落在五态判定与退出码 0–6">
+  <img src="docs/assets/dsh-clinic-hero-zh-light.webp" width="100%" alt="dsh-clinic：一次运行验收一个 DSH 插件——包结构、cordis 契约、沙箱冒烟与集合站清单，结论落在六态判定与退出码 0–6">
 </picture>
 
 # dsh-clinic
@@ -33,7 +33,7 @@ dsh plugin --profile <name> add dsh-clinic
 
 ## 它是什么
 
-`dsh-clinic` 把「这个插件能不能装、能不能起、进了目录站会不会被拒」拆成四层可判读的检查：**R 包结构 → K cordis 契约 → D 沙箱冒烟 → CC 集合站清单**。R 与 K 只读已提交的树，不需要装依赖、不需要联网；D 会在 `%TEMP%` 的一次性沙箱里真正 `npm pack` 并用无钥 profile 启动到模型请求；CC 对照生态里五个目录/注册表的真实约束。一次运行给出五态结论（pass / warn / skip / fail / error）与七个退出码，CI 可以直接按码分流。
+`dsh-clinic` 把「这个插件能不能装、能不能起、进了目录站会不会被拒」拆成四层可判读的检查：**R 包结构 → K cordis 契约 → D 沙箱冒烟 → CC 集合站清单**。R 与 K 只读已提交的树，不需要装依赖、不需要联网；D 会在 `%TEMP%` 的一次性沙箱里真正 `npm pack` 并用无钥 profile 启动到模型请求；CC 对照生态里五个目录/注册表的真实约束。一次运行给出六态结论（pass / warn / info / skip / fail / error）与七个退出码，CI 可以直接按码分流。
 
 判据不是拍脑袋写的：全部来自 2026-09-07 三路一手调研——deepseek-harness 的文档与源码、cordiverse/cordis 的源码契约、工作区全渠道存量盘点（全文与每个判据的出处见 [`SURVEY.md`](SURVEY.md)）。它不替代测试，也不构成安全审计：它把可静态判定的部分变成可复现的门禁。
 
@@ -48,11 +48,11 @@ dsh plugin --profile <name> add dsh-clinic
 - GitHub 上名称含 `dsh-plugin-doctor` 的仓有 10 个（其中 8 个恰同名），例如 `zoahdev/dsh-plugin-doctor`（只在 GitHub，从未发布到 npm）。
 - [`dsh-testkit`](https://github.com/PerryLink/dsh-testkit) 的 README 把旧名链向 zoahdev 的仓，与本仓无关。
 
-一句话定位：**零依赖、可离线（`--only R,K`）、把 cordis v4 契约（K1–K9）与五大集合站清单（CC1–CC5）做成退出码可判读的 CI 门禁。**（“唯一”这类全称不作声称——仅在已核对的工具集合内未见同类。）
+一句话定位：**零依赖、可离线（`--only R,K`）、把 cordis v4 契约（K1–K16）与五大集合站清单（CC1–CC5）做成退出码可判读的 CI 门禁。**（“唯一”这类全称不作声称——仅在已核对的工具集合内未见同类。）
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-clinic-flow-v5-dark.svg">
-  <img src="docs/assets/dsh-clinic-flow-v5-light.svg" width="100%" alt="dsh-clinic 结构图（漏斗）：R/K/D/CC/X 五路取证汇入同一漏斗，每项检查落入五态之一，最坏状态决定判定，漏斗口给出退出码 0–6">
+  <img src="docs/assets/dsh-clinic-flow-v5-light.svg" width="100%" alt="dsh-clinic 结构图（漏斗）：R/K/D/CC/X 五路取证汇入同一漏斗，每项检查落入六态之一，最坏状态决定判定，漏斗口给出退出码 0–6">
 </picture>
 
 ## 三步上手
@@ -101,7 +101,7 @@ dsh plugin --profile <name> add dsh-clinic
 同一套检查有两种入口：CLI（`doctor.mjs`，有退出码）与宿主半区（`plugin_doctor` 工具 / `/doctor` 命令，返回完整报告）。四个核心分组：
 
 - **R｜包结构（R0–R8）** —— 基础字段；激活门 `dsh.bundle.patch`（关键）；`npm pack --dry-run` 的 tarball 是否含入口与 patch；`cordis.patch.yml` 结构；入口 `name`/`apply` 导出；rescope 依赖口径；`engines` 对齐；prebuild + `files` 白名单；旧 rc peer 残留。
-- **K｜cordis 契约（K1–K9）** —— 服务访问 vs `inject` 声明；`ctx` 活数据序列化红线；定时器/监听器未包 `ctx.effect`；Schema 含函数；`apply` 返回形状（v4 Effect 契约）；`inject` 服务名 seam；v3 遗留 API；Config 必须是 Standard Schema；`name==='apply'` 特例。
+- **K｜cordis 契约（K1–K16）** —— 服务访问 vs `inject` 声明；`ctx` 活数据序列化红线；定时器/监听器未包 `ctx.effect`；Schema 含函数；`apply` 返回形状（v4 Effect 契约）；`inject` 服务名 seam；v3 遗留 API；Config 必须是 Standard Schema；`name==='apply'` 特例；K15 嵌套 activation spec（宿主 ≥ 0.2.2-rc.3 已扁平化，request 内的 prompt 会失效）；K16 思考模式下只设 temperature/top_p 而不设 reasoningEffort（参数被静默忽略，INFO 级）。
 - **D｜沙箱冒烟（D0–D3、D9）** —— `npm pack` → `dsh plugin --profile headless add <tarball>` → 断言 profile 的 bundles 含包名 → `--dump-config` 层标记 → 无钥 headless 运行期望 **exit 1 + `dsh: MISSING_CREDENTIAL`**（=组合 boot 到模型请求阶段）→ 沙箱清理。
 - **CC｜集合站清单（CC1–CC5）** —— 认证注册表 spec v1 的五维 evidence；adp-list yml 字段/枚举/描述；dsh-catalog 目录条目约束（禁安装命令、截断启发式）；omdsh `dshWorkshop` 激活五值；dsh-plugin-kit 三门（license / 五语 README / seam 三角色）。
 - **X｜宿主契约（补充证据）** —— peer 走廊、`inject` 服务面、patch 行可定位性；读不到 dsh 安装时该组降级，不冒充通过。
@@ -113,7 +113,7 @@ dsh plugin --profile <name> add dsh-clinic
 | 分组 | 项 | 判据要点 |
 |---|---|---|
 | 静态·包结构 | R0–R8 | 基础字段；**激活门 `dsh.bundle.patch`（关键）**；tarball 含入口与 patch；`cordis.patch.yml` 结构；入口 `name`/`apply` 导出；rescope 依赖口径（禁裸 `cordis`）；`engines` 对齐官方线；预构建 + `files` 白名单；peer 旧 rc 残留（2026-09-05 双基线教训） |
-| 静态·cordis 契约 | K1–K9 | 服务访问 vs `inject` 声明；`ctx` 活数据序列化红线；定时器/监听器未包 `ctx.effect`；Schema 含函数；`apply` 返回形状（v4 Effect 契约）；`inject` 服务名 seam；**v3 遗留 API（3.x→4.x 已删除清单）**；Config 必须是 Standard Schema；`name==='apply'` 特例 |
+| 静态·cordis 契约 | K1–K16 | 服务访问 vs `inject` 声明；`ctx` 活数据序列化红线；定时器/监听器未包 `ctx.effect`；Schema 含函数；`apply` 返回形状（v4 Effect 契约）；`inject` 服务名 seam；**v3 遗留 API（3.x→4.x 已删除清单）**；Config 必须是 Standard Schema；`name==='apply'` 特例；K15 嵌套 activation spec（宿主 ≥ 0.2.2-rc.3 已扁平化，request 内的 prompt 会失效）；K16 思考模式下只设 temperature/top_p 而不设 reasoningEffort（参数被静默忽略，INFO 级） |
 | 动态·沙箱冒烟 | D0–D3、D9 | `npm pack` → `dsh plugin --profile headless add <tarball>` → 断言 `dsh.profile.bundles` 含包名 → `--dump-config` 层标记 → keyless headless 运行期望 **exit 1 + `dsh: MISSING_CREDENTIAL`**（排除 NO_ADAPTER / ERR_MODULE_NOT_FOUND / SyntaxError / TypeError）→ 沙箱清理 |
 | 生态·集合站清单 | CC1–CC5 | 认证注册表 spec v1 五维 evidence；adp-list yml 字段/枚举/描述；dsh-catalog 目录条目约束（禁安装命令、截断启发式）；omdsh `dshWorkshop` activation 5 值；dsh-plugin-kit 三门（license / 五语 README / seam 三角色，优先调用 kit 官方 CLI） |
 
@@ -162,7 +162,7 @@ dsh plugin --profile <name> add dsh-clinic
 | 别名 | 分组全名 | 内容 |
 |---|---|---|
 | `R` | 静态·包结构 | R0–R8 |
-| `K` | 静态·cordis 契约扫描 | K1–K9 |
+| `K` | 静态·cordis 契约扫描 | K1–K16 |
 | `D` | 动态·沙箱冒烟 | D0–D3、D9 |
 | `CC` | 生态·集合站清单 | CC1–CC5 |
 
@@ -229,7 +229,7 @@ node doctor.mjs --repo . --only NOPE --no-smoke
 
 ### Path B — 作者签发的审计徽章
 
-挂这枚徽章的含义只有一条，且可审计：**该仓在自己的 CI 里跑 dsh-clinic 的静态 R+K 门禁（16 项：R0/R1/R3/R5/R6/R7/R8 + K1–K9），且门禁在默认分支当前 HEAD 上是绿的**，*并由本项目的审计者复核过*。它**不是**认证徽章：不含 Scorecard、provenance、安装冒烟。R2（tarball 完整性）与 R4（入口契约）读取构建产物 `lib/`，而家族多数仓的构建需要 `HARNESS_COMMIT` + `gen-aliases` 才能通过——这两项由各仓自己的 `ci.yml`（build drift gate + pack smoke）把关，不在本门禁内。
+挂这枚徽章的含义只有一条，且可审计：**该仓在自己的 CI 里跑 dsh-clinic 的静态 R+K 门禁（23 项：R0/R1/R3/R5/R6/R7/R8 + K1–K16），且门禁在默认分支当前 HEAD 上是绿的**，*并由本项目的审计者复核过*。它**不是**认证徽章：不含 Scorecard、provenance、安装冒烟。R2（tarball 完整性）与 R4（入口契约）读取构建产物 `lib/`，而家族多数仓的构建需要 `HARNESS_COMMIT` + `gen-aliases` 才能通过——这两项由各仓自己的 `ci.yml`（build drift gate + pack smoke）把关，不在本门禁内。
 
 ```markdown
 [![dsh-doctor](https://raw.githubusercontent.com/PerryLink/dsh-clinic/main/badges/PerryLink__dsh-github.svg)](https://github.com/PerryLink/dsh-clinic#已验证徽章)
@@ -249,11 +249,11 @@ node doctor.mjs --repo . --only NOPE --no-smoke
 
 这里的数字来自**真实运行**，不是营销图。首份第三方（非 PerryLink）静态 R+K 扫描（2026-09-10，0.2.0）：**60 个候选 → 20 个真正声明 `dsh.bundle.patch` 的插件 → 16 项门禁下 10 通过 / 10 失败**。2026-09-23 用 0.3.0 对同一合格集重扫：**20 个候选重扫 → 19 个合格 → 6 通过 / 13 失败 / 0 降级 / 1 克隆失败**；失败直方图 `{"R8":9,"R3":5,"R7":3}`。**没有任何仓因 R3/R7 修复而回退**——头条变化全部来自 `R8`：peer 线最低要求前移，仍钉在 `0.1.0-rc.6` 的仓被判定为落后；`R8` 读作**陈旧度，不是损坏**。完整方法、逐仓表格、复现命令与更正通道见 [`THIRD-PARTY-RK-SCAN.md`](THIRD-PARTY-RK-SCAN.md)；2026-09-10 的机器可读基线在 `data/rk-scans.json`。
 
-**它不是认证、不是评级，也不代表插件安全**：pass 仅表示“该 commit 上 16 项静态门禁未报失败”。方法上：只读克隆、**零执行**第三方代码，R2/R4 单列、不入门禁；`lib-fallback` 覆盖真实但不等价，K3–K7 可能少报。被点名仓若有异议，按报告里的更正通道提 issue，会以同等显著度原地更正。
+**它不是认证、不是评级，也不代表插件安全**：pass 仅表示“该 commit 上 23 项静态门禁未报失败”。方法上：只读克隆、**零执行**第三方代码，R2/R4 单列、不入门禁；`lib-fallback` 覆盖真实但不等价，K3–K7 可能少报。被点名仓若有异议，按报告里的更正通道提 issue，会以同等显著度原地更正。
 
 ## 配置
 
-`dsh-clinic` 自身**没有 Config schema**——可调项就是 CLI 参数与宿主半区的四个工具参数。默认值即可用于 CI；离线静态门禁只需要 `--only R,K --no-smoke`。
+`dsh-clinic` 自身**没有 Config schema**——可调项就是 CLI 参数与宿主半区的六个工具参数。默认值即可用于 CI；离线静态门禁只需要 `--only R,K --no-smoke`。
 
 CLI 常用参数：
 
@@ -267,6 +267,8 @@ CLI 常用参数：
 | `--format check` | doctor | 三值契约视图（PASS/WARN/FAIL + 0/1/2，扁平 `checks[]`） |
 | `--workspace <root>` | 自动 | 兄弟仓所在家族工作区（CC1–CC5 与 K14 核对用） |
 | `--allow-degraded` | 关 | 显式接受“整组未真跑”；默认该情况 exit 6 |
+| `--no-nested-activation` | 开 | 关闭 K15（嵌套 activation spec 检查） |
+| `--no-thinking` | 开 | 关闭 K16（思考模式下 temperature/top_p 误用检查） |
 
 <details>
 <summary>宿主半区参数（<code>plugin_doctor</code> / <code>/doctor</code>）</summary>
@@ -277,6 +279,8 @@ CLI 常用参数：
 | `smoke` | `false` | 额外跑 D 组沙箱冒烟（需网络 + pnpm） |
 | `host` | `true` | 跑 X 组宿主契约检查；读不到 dsh 安装时该组降级 |
 | `workspace` | 自动 | 家族工作区目录（含多个 `dsh-*` 插件仓的父目录），用于 CC1–CC5 与 K14；默认从被检仓向上定位，也可用 `DSH_WORKSPACE` 环境变量 |
+| `nestedActivation` | `true` | 跑 K15；对应 CLI 的 `--no-nested-activation` |
+| `thinking` | `true` | 跑 K16；对应 CLI 的 `--no-thinking` |
 
 </details>
 
@@ -389,7 +393,7 @@ lib/framework.mjs        检查注册/运行/判定/渲染（零依赖）
 lib/util.mjs             临时沙箱 + 子进程执行（stdout/stderr 落盘，规避管道捕获限制）
 lib/workspace.mjs        家族工作区定位
 lib/checks-package.mjs   静态·包结构 R0–R8
-lib/checks-cordis.mjs    静态·cordis 契约 K1–K9
+lib/checks-cordis.mjs    静态·cordis 契约 K1–K16
 lib/checks-runtime.mjs   X 组宿主契约检查
 lib/checks-smoke.mjs     动态·沙箱冒烟 D0–D3、D9
 lib/checks-collections.mjs  生态·集合站清单 CC1–CC5

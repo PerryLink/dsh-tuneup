@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-clinic-hero-en-dark.webp">
-  <img src="docs/assets/dsh-clinic-hero-en-light.webp" width="100%" alt="dsh-clinic: acepta un plugin DSH en una sola ejecución — estructura del paquete, contrato cordis, arranque en sandbox y listados, con veredicto en cinco estados y códigos de salida 0–6">
+  <img src="docs/assets/dsh-clinic-hero-en-light.webp" width="100%" alt="dsh-clinic: acepta un plugin DSH en una sola ejecución — estructura del paquete, contrato cordis, arranque en sandbox y listados, con veredicto en seis estados y códigos de salida 0–6">
 </picture>
 
 # dsh-clinic
@@ -33,7 +33,7 @@ dsh plugin --profile <name> add dsh-clinic
 
 ## Qué es
 
-`dsh-clinic` divide «¿se puede instalar este plugin, puede arrancar, lo rechazará un directorio?» en cuatro capas legibles: **R estructura del paquete → K contratos cordis → D smoke en sandbox → CC listados de directorio**. R y K solo leen el árbol confirmado —sin instalar dependencias ni usar la red—; D ejecuta de verdad `npm pack` y arranca un perfil sin credenciales en un sandbox de un solo uso hasta la petición al modelo; CC contrasta las restricciones reales de cinco directorios/registros del ecosistema. Una ejecución produce un veredicto de cinco estados (pass / warn / skip / fail / error) y siete códigos de salida, así que la CI puede ramificar por el código.
+`dsh-clinic` divide «¿se puede instalar este plugin, puede arrancar, lo rechazará un directorio?» en cuatro capas legibles: **R estructura del paquete → K contratos cordis → D smoke en sandbox → CC listados de directorio**. R y K solo leen el árbol confirmado —sin instalar dependencias ni usar la red—; D ejecuta de verdad `npm pack` y arranca un perfil sin credenciales en un sandbox de un solo uso hasta la petición al modelo; CC contrasta las restricciones reales de cinco directorios/registros del ecosistema. Una ejecución produce un veredicto de seis estados (pass / warn / info / skip / fail / error) y siete códigos de salida, así que la CI puede ramificar por el código.
 
 Los criterios no son improvisados: vienen de tres líneas de investigación de primera mano fechadas el 2026-09-07 —la documentación y el código de deepseek-harness, los contratos de código de cordiverse/cordis y un inventario de todos los canales de distribución del espacio de trabajo (texto completo y cada cita en [`SURVEY.md`](SURVEY.md))—. No sustituye a las pruebas ni es una auditoría de seguridad: convierte lo que puede juzgarse estáticamente en una puerta reproducible.
 
@@ -48,11 +48,11 @@ En 2026-11 este repositorio pasó de **`@perrylink/dsh-plugin-doctor`** a **`dsh
 - Diez repos de GitHub llevan `dsh-plugin-doctor` en el nombre (ocho exactamente), p. ej. `zoahdev/dsh-plugin-doctor` (solo GitHub, nunca publicado en npm).
 - El README de [`dsh-testkit`](https://github.com/PerryLink/dsh-testkit) enlaza el nombre antiguo al repo de zoahdev; no tiene relación con este.
 
-En una línea: **sin dependencias, capaz de operar sin conexión (`--only R,K`), y convierte los contratos cordis v4 (K1–K9) y cinco listados de directorio del ecosistema (CC1–CC5) en una puerta de CI cuyo veredicto se lee en el código de salida.** (Sin afirmaciones del tipo «el único»: solo que no apareció nada comparable dentro del conjunto de herramientas realmente examinado.)
+En una línea: **sin dependencias, capaz de operar sin conexión (`--only R,K`), y convierte los contratos cordis v4 (K1–K16) y cinco listados de directorio del ecosistema (CC1–CC5) en una puerta de CI cuyo veredicto se lee en el código de salida.** (Sin afirmaciones del tipo «el único»: solo que no apareció nada comparable dentro del conjunto de herramientas realmente examinado.)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-clinic-flow-v5-dark.svg">
-  <img src="docs/assets/dsh-clinic-flow-v5-light.svg" width="100%" alt="Estructura de dsh-clinic (un embudo): cinco fuentes de evidencia R/K/D/CC/X entran en un embudo, cada comprobación cae en uno de cinco estados, el peor estado fija el veredicto y la salida da los códigos de salida 0–6">
+  <img src="docs/assets/dsh-clinic-flow-v5-light.svg" width="100%" alt="Estructura de dsh-clinic (un embudo): cinco fuentes de evidencia R/K/D/CC/X entran en un embudo, cada comprobación cae en uno de seis estados, el peor estado fija el veredicto y la salida da los códigos de salida 0–6">
 </picture>
 
 ## Instalación en tres pasos
@@ -101,7 +101,7 @@ En una línea: **sin dependencias, capaz de operar sin conexión (`--only R,K`),
 Las mismas comprobaciones tienen dos entradas: la CLI (`doctor.mjs`, con códigos de salida) y la mitad anfitriona (herramienta `plugin_doctor` / comando `/doctor`, que devuelve el informe completo). Cuatro grupos centrales:
 
 - **R | estructura del paquete (R0–R8)** — campos base; la puerta de activación `dsh.bundle.patch` (crítica); si `npm pack --dry-run` incluye entrada y patch; estructura de `cordis.patch.yml`; exportaciones `name`/`apply` de la entrada; política de dependencias rescopeadas; alineación de `engines`; prebuild + lista blanca `files`; peers antiguos de rc.
-- **K | contratos cordis (K1–K9)** — acceso a servicios vs declaración `inject`; la línea roja de serialización de datos vivos de `ctx`; temporizadores/listeners sin envolver en `ctx.effect`; Schema con función; forma de retorno de `apply` (contrato Effect v4); la costura del nombre de servicio `inject`; APIs heredadas de v3; Config debe ser un Standard Schema; el caso especial `name==='apply'`.
+- **K | contratos cordis (K1–K16)** — acceso a servicios vs declaración `inject`; la línea roja de serialización de datos vivos de `ctx`; temporizadores/listeners sin envolver en `ctx.effect`; Schema con función; forma de retorno de `apply` (contrato Effect v4); la costura del nombre de servicio `inject`; APIs heredadas de v3; Config debe ser un Standard Schema; el caso especial `name==='apply'`; K15 spec de activation anidada (el host ≥ 0.2.2-rc.3 la aplana, así que un prompt dentro de request deja de funcionar); K16 temperature/top_p sin reasoningEffort en modo pensamiento (se ignoran en silencio, INFO).
 - **D | smoke en sandbox (D0–D3, D9)** — `npm pack` → `dsh plugin --profile headless add <tarball>` → afirmar que los bundles del perfil contienen el nombre del paquete → marcador de capa `--dump-config` → ejecución headless sin credenciales que debe **salir con 1 + `dsh: MISSING_CREDENTIAL`** (la composición arrancó hasta la petición al modelo) → limpieza del sandbox.
 - **CC | listados de directorio (CC1–CC5)** — evidencia de cinco dimensiones del spec v1 del registro de certificación; campos/enums/descripciones del yml de adp-list; restricciones de entrada de dsh-catalog (comandos de instalación prohibidos, heurísticas de truncado); los cinco valores de activación de `dshWorkshop` en omdsh; las tres puertas de dsh-plugin-kit (license / README en cinco idiomas / los tres roles de costura).
 - **X | contratos del anfitrión (evidencia complementaria)** — corredor de peers, superficie de servicios `inject`, localizabilidad de la fila del patch; degrada cuando no se puede leer una instalación de dsh y nunca finge un aprobado.
@@ -113,7 +113,7 @@ Las mismas comprobaciones tienen dos entradas: la CLI (`doctor.mjs`, con código
 | Grupo | Comprobaciones | Qué cubren los criterios |
 |---|---|---|
 | estático · estructura del paquete | R0–R8 | campos base; **la puerta de activación `dsh.bundle.patch` (crítica)**; el tarball contiene entrada y patch; estructura de `cordis.patch.yml`; exportaciones `name`/`apply`; política de dependencias rescopeadas (prohibido `cordis` pelado); `engines` alineado a la línea oficial; prebuild + lista blanca `files`; peers antiguos de rc (la lección de la doble base del 2026-09-05) |
-| estático · contrato Cordis | K1–K9 | acceso a servicios vs declaración `inject`; línea roja de serialización de datos vivos de `ctx`; temporizadores/listeners sin `ctx.effect`; Schema con función; forma de retorno de `apply` (contrato Effect v4); costura del nombre de servicio `inject`; **APIs heredadas de v3 (lista de eliminación 3.x→4.x)**; Config debe ser Standard Schema; el caso especial `name==='apply'` |
+| estático · contrato Cordis | K1–K16 | acceso a servicios vs declaración `inject`; línea roja de serialización de datos vivos de `ctx`; temporizadores/listeners sin `ctx.effect`; Schema con función; forma de retorno de `apply` (contrato Effect v4); costura del nombre de servicio `inject`; **APIs heredadas de v3 (lista de eliminación 3.x→4.x)**; Config debe ser Standard Schema; el caso especial `name==='apply'`; K15 spec de activation anidada (el host ≥ 0.2.2-rc.3 la aplana, así que un prompt dentro de request deja de funcionar); K16 temperature/top_p sin reasoningEffort en modo pensamiento (se ignoran en silencio, INFO) |
 | dinámico · smoke en sandbox | D0–D3, D9 | `npm pack` → `dsh plugin --profile headless add <tarball>` → afirmar que `dsh.profile.bundles` contiene el nombre → marcador de capa `--dump-config` → ejecución headless sin credenciales que debe **salir con 1 + `dsh: MISSING_CREDENTIAL`** (se excluyen NO_ADAPTER / ERR_MODULE_NOT_FOUND / SyntaxError / TypeError) → limpieza del sandbox |
 | ecosistema · listados de directorio | CC1–CC5 | evidencia de cinco dimensiones del spec v1; campos/enums/descripciones del yml de adp-list; restricciones de dsh-catalog (comandos de instalación prohibidos, heurísticas de truncado); los cinco valores de activación de `dshWorkshop`; las tres puertas de dsh-plugin-kit (license / README en cinco idiomas / tres roles de costura, prefiriendo la CLI oficial del kit) |
 
@@ -162,7 +162,7 @@ La cobertura se escribe en `coverage.K` del JSON (`{filesInspected, mode}`) y se
 | Alias | Nombre completo del grupo | Contenido |
 |---|---|---|
 | `R` | estático · estructura del paquete | R0–R8 |
-| `K` | estático · escaneo del contrato Cordis | K1–K9 |
+| `K` | estático · escaneo del contrato Cordis | K1–K16 |
 | `D` | dinámico · smoke en sandbox | D0–D3, D9 |
 | `CC` | ecosistema · listados de directorio | CC1–CC5 |
 
@@ -229,7 +229,7 @@ Dos advertencias honestas sobre la Ruta A: la insignia refleja *tu* workflow, as
 
 ### Ruta B — insignia auditada emitida por el autor
 
-Llevar esta insignia significa exactamente una cosa auditable: **el repo ejecuta la puerta estática R+K de dsh-clinic (16 comprobaciones: R0/R1/R3/R5/R6/R7/R8 + K1–K9) en su propia CI, y esa puerta está verde en el HEAD actual de la rama por defecto**, *revisado por el auditor de este proyecto*. **No** es una insignia de certificación: sin Scorecard, sin procedencia, sin smoke de instalación. R2 (integridad del tarball) y R4 (contrato de entrada) leen el `lib/` construido, y construir la mayoría de los repos de la familia necesita `HARNESS_COMMIT` + `gen-aliases` —esas dos las cubre el `ci.yml` propio de cada repo (puerta de build-drift + pack smoke) y quedan deliberadamente fuera de esta puerta.
+Llevar esta insignia significa exactamente una cosa auditable: **el repo ejecuta la puerta estática R+K de dsh-clinic (23 comprobaciones: R0/R1/R3/R5/R6/R7/R8 + K1–K16) en su propia CI, y esa puerta está verde en el HEAD actual de la rama por defecto**, *revisado por el auditor de este proyecto*. **No** es una insignia de certificación: sin Scorecard, sin procedencia, sin smoke de instalación. R2 (integridad del tarball) y R4 (contrato de entrada) leen el `lib/` construido, y construir la mayoría de los repos de la familia necesita `HARNESS_COMMIT` + `gen-aliases` —esas dos las cubre el `ci.yml` propio de cada repo (puerta de build-drift + pack smoke) y quedan deliberadamente fuera de esta puerta.
 
 ```markdown
 [![dsh-doctor](https://raw.githubusercontent.com/PerryLink/dsh-clinic/main/badges/PerryLink__dsh-github.svg)](https://github.com/PerryLink/dsh-clinic/blob/main/README.es.md#insignias-verificadas)
@@ -249,11 +249,11 @@ Llevar esta insignia significa exactamente una cosa auditable: **el repo ejecuta
 
 Estos números vienen de **ejecuciones reales**, no de gráficos de marketing. El primer escaneo estático R+K de plugins de terceros (no PerryLink) (2026-09-10, 0.2.0): **60 candidatos → 20 plugins que declaran de verdad `dsh.bundle.patch` → 10 aprobados / 10 fallidos bajo la puerta de 16 comprobaciones**. Un reescaneo del mismo conjunto cualificado el 2026-09-23 con 0.3.0: **20 candidatos reescaneados → 19 cualificados → 6 aprobados / 13 fallidos / 0 degradados / 1 fallo de clonado**; histograma de fallos con puerta `{"R8":9,"R3":5,"R7":3}`. **Ningún repositorio retrocedió por las correcciones de R3/R7**: el movimiento principal es todo `R8`: la línea mínima de peers avanzó y los repos que siguen fijando `0.1.0-rc.6` están ahora mediblemente atrasados. Lee `R8` como **obsolescencia, no rotura**. El método completo, la tabla por repo, los comandos de reproducción y el canal de corrección están en [`THIRD-PARTY-RK-SCAN.md`](THIRD-PARTY-RK-SCAN.md); la base legible por máquina del 2026-09-10 está en `data/rk-scans.json`.
 
-**No es una certificación, ni una calificación, y no dice nada sobre la seguridad de un plugin**: un aprobado solo significa que «las 16 comprobaciones estáticas no reportaron ningún fallo en ese commit». Método: clones de solo lectura, **ejecución cero** de código de terceros, R2/R4 listados aparte y no sujetos a la puerta; la cobertura `lib-fallback` es real pero no equivalente, y K3–K7 pueden infravalorar. Cualquier repositorio nombrado en el informe puede abrir un issue por el canal de corrección y la fila se re-ejecuta y se enmienda en el mismo lugar con la misma prominencia.
+**No es una certificación, ni una calificación, y no dice nada sobre la seguridad de un plugin**: un aprobado solo significa que «las 23 comprobaciones estáticas no reportaron ningún fallo en ese commit». Método: clones de solo lectura, **ejecución cero** de código de terceros, R2/R4 listados aparte y no sujetos a la puerta; la cobertura `lib-fallback` es real pero no equivalente, y K3–K7 pueden infravalorar. Cualquier repositorio nombrado en el informe puede abrir un issue por el canal de corrección y la fila se re-ejecuta y se enmienda en el mismo lugar con la misma prominencia.
 
 ## Configuración
 
-`dsh-clinic` no tiene **ningún Config schema** propio: los ajustes son los flags de la CLI y los cuatro parámetros de la mitad anfitriona. Los valores por defecto sirven para CI; una puerta estática sin red solo necesita `--only R,K --no-smoke`.
+`dsh-clinic` no tiene **ningún Config schema** propio: los ajustes son los flags de la CLI y los seis parámetros de la mitad anfitriona. Los valores por defecto sirven para CI; una puerta estática sin red solo necesita `--only R,K --no-smoke`.
 
 Flags habituales de la CLI:
 
@@ -267,6 +267,8 @@ Flags habituales de la CLI:
 | `--format check` | doctor | vista de contrato de tres valores (PASS/WARN/FAIL + 0/1/2, `checks[]` plano) |
 | `--workspace <root>` | automático | workspace familiar con los repos hermanos (para CC1–CC5 y K14) |
 | `--allow-degraded` | desactivado | aceptar explícitamente «el grupo entero nunca se ejecutó»; por defecto es salida 6 |
+| `--no-nested-activation` | activo | desactiva K15 (spec de activation anidada) |
+| `--no-thinking` | activo | desactiva K16 (uso de temperature/top_p en modo pensamiento) |
 
 <details>
 <summary>Parámetros de la mitad anfitriona (<code>plugin_doctor</code> / <code>/doctor</code>)</summary>
@@ -277,6 +279,8 @@ Flags habituales de la CLI:
 | `smoke` | `false` | ejecutar además el smoke de sandbox del grupo D (requiere red + pnpm) |
 | `host` | `true` | ejecutar el grupo X (contratos del anfitrión); degrada si no se puede leer una instalación de dsh |
 | `workspace` | automático | directorio del workspace familiar (el padre que contiene varios repos de plugins `dsh-*`) para CC1–CC5 y K14; se resuelve hacia arriba desde el repositorio por defecto, y `DSH_WORKSPACE` también funciona |
+| `nestedActivation` | `true` | ejecuta K15; equivale a `--no-nested-activation` en la CLI |
+| `thinking` | `true` | ejecuta K16; equivale a `--no-thinking` en la CLI |
 
 </details>
 
@@ -389,7 +393,7 @@ lib/framework.mjs        registro/ejecución/veredicto/renderizado de comprobaci
 lib/util.mjs             sandbox temporal + ejecución de subprocesos (stdout/stderr a disco, evitando límites de captura por tubería)
 lib/workspace.mjs        localización del workspace familiar
 lib/checks-package.mjs   estático · estructura del paquete R0–R8
-lib/checks-cordis.mjs    estático · contrato Cordis K1–K9
+lib/checks-cordis.mjs    estático · contrato Cordis K1–K16
 lib/checks-runtime.mjs   comprobaciones X del contrato del anfitrión
 lib/checks-smoke.mjs     dinámico · smoke en sandbox D0–D3, D9
 lib/checks-collections.mjs  ecosistema · listados de directorio CC1–CC5

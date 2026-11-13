@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Spec version** | `v1` (checkset `R0-R8+K1-K14+D0-D3,D9+CC1-CC5/3`) |
+| **Spec version** | `v1` (checkset `R0-R8+K1-K16+D0-D3,D9+CC1-CC5/3`) |
 | **Author / Editor** | **PerryLink** — <https://github.com/PerryLink> |
 | **Canonical source** | <https://github.com/PerryLink/dsh-clinic> |
 | **Reference implementation** | `dsh-clinic` (see `package.json`) |
@@ -41,7 +41,7 @@ than left as an emergent convention, so that a result can be cited as
   version is not falsifiable and should not be treated as evidence.
 - **The canonical gate.** The set of checks a project gates its CI on is its own
   choice and must be stated by that project. The reference project's own gate is
-  `R0, R1, R3, R5, R6, R7, R8, K1–K14` (21 checks), deliberately excluding `R2`
+  `R0, R1, R3, R5, R6, R7, R8, K1–K16` (23 checks), deliberately excluding `R2`
   and `R4`, which read **built** artifacts. A project that gates a different set
   has not thereby conformed to the same claim.
 
@@ -58,7 +58,7 @@ matter, and a conforming implementation must not silently discard them:
 
 | This specification | The three-value contract | Why the difference is kept |
 |---|---|---|
-| five statuses, including `skip` | three | `skip` means **not evaluated**. Collapsing it into `pass` is the false-green this specification exists to prevent. |
+| six statuses, including `skip` and `info` | three | `skip` means **not evaluated**; `info` is advisory. The three-value contract has no direct equivalent for either. |
 | exit codes `3`/`4`/`5`/`6` | `0`/`1`/`2` | `4` (unsupported host) and `6` (degraded) are *not* plugin defects. Reporting them as `1` blames the plugin for the environment. |
 | per-check `id`, `groupId`, `category`, `coverage` | `name`/`status`/`detail` | §3.3 makes the ID the citable, frozen handle. |
 
@@ -79,12 +79,13 @@ is unchanged.
 
 ## 2. Verdict vocabulary (normative)
 
-Five statuses exist. Their meanings are fixed and may not be interchanged.
+Six statuses exist. Their meanings are fixed and may not be interchanged.
 
 | Status | Meaning | Counts as a failure? |
 |---|---|---|
 | `pass` | The requirement was evaluated and holds. | no |
 | `warn` | The requirement was evaluated and looks violated, **but the check is heuristic** and may be wrong. Requires human review; never condemns a plugin by itself. | no |
+| `info` | The requirement was evaluated and the finding is advisory only — worth knowing, never a failure or a warning. | no |
 | `fail` | The requirement was evaluated and is violated. | **yes** |
 | `error` | The check itself could not complete (doctor-internal fault). | **yes** |
 | `skip` | The requirement was **not evaluated** — it does not apply, or its input was absent. | no |
@@ -113,7 +114,7 @@ specification exists to prevent.
 | Group | ID | Checks | Requires |
 |---|---|---|---|
 | Static · package structure | `R` | R0–R8 | the committed tree |
-| Static · Cordis contract scan | `K` | K1–K14 | the committed tree |
+| Static · Cordis contract scan | `K` | K1–K16 | the committed tree |
 | Dynamic · sandbox smoke | `D` | D0–D3, D9 | network, `npm`, `pnpm` |
 | Ecosystem · directory listings | `CC` | CC1–CC5 | a workspace holding the listed directories |
 
@@ -142,7 +143,7 @@ once turned the CI gates of 35 repositories green while checking nothing.*
 
 ### 3.3 Verdicts do not depend on colour or language
 
-Check IDs are ASCII and **frozen**: `R0`–`R8`, `K1`–`K14`, `D0`–`D3`, `D9`,
+Check IDs are ASCII and **frozen**: `R0`–`R8`, `K1`–`K16`, `D0`–`D3`, `D9`,
 `CC1`–`CC5`. A check's human-readable label may be translated; its ID may not
 change meaning. Implementations must expose the ID independently of any
 translated display string.
@@ -175,7 +176,7 @@ ignores it sees exactly the run it saw before.
 | Doctor group | ENTRY contribution | Decides `entry.status`? |
 |---|---|---|
 | R (R0–R8) | static package/entry/patch shape, dependency and peer eligibility | yes |
-| K (K1–K14) | static Cordis contract heuristics | yes |
+| K (K1–K16) | static Cordis contract heuristics | yes |
 | D (D0–D3, D9) | sandbox pack/install/layer/boot chain (D9 is hygiene, not boot evidence) | yes |
 | X (X1–X5) | host-surface and peer-corridor support | no — supplementary |
 | CC (CC1–CC5) | directory listings, not package compatibility | no |
@@ -493,6 +494,39 @@ plugin repositories. It never passes silently on an unreadable workspace, and th
 shipped CI workflow passes no `--workspace`, so the check degrades to `skip`
 there rather than failing a build.
 
+### 4.2c Group K continued — host-migration heuristics (K15–K16)
+
+K15 and K16 are text heuristics over the committed tree. They stay in the `K`
+group so `--only R,K` remains the offline gate; neither can make a run fail
+(K15 returns `warn` at worst, K16 returns `info`). Both can be disabled
+individually without changing the group contract.
+
+#### K15 — Nested activation spec
+**Requirement.** A `ctx.subagents.startActivation()` call must not carry its task
+fields in a nested `request` object when the evaluated host is `0.2.2-rc.3` or
+newer; that host accepts the flat `SubagentActivationSpec`. On older hosts the
+nested shape is still valid. Code that deliberately accepts both shapes
+satisfies the requirement.
+**Verdicts.** `skip` (no source files, or `--no-nested-activation`) · `pass` · `warn`.
+**Evidence.** `docs/upgrade-guide/v0.2.1-rc.2/subagent-activation-options/guide.md`
+in the host checkout. The evaluated host is the highest of the installed
+version and any explicit `--host`, or the highest published line
+(`lib/host-lines.mjs`) when neither exists.
+**Failure meaning.** The host stops reading `request`; the activation fails for
+lack of `prompt`. The `warn` ceiling is deliberate: the scanner cannot see a
+request assembled through a wrapper it does not follow.
+
+#### K16 — `temperature`/`top_p` without `reasoningEffort`
+**Requirement.** An LLM request that sets `temperature` or `top_p`/`topP` should
+also set `reasoningEffort`.
+**Verdicts.** `skip` (no source files, or `--no-thinking`) · `pass` · `info`.
+**Failure meaning.** Thinking mode is on by default; reasoning requests do not
+forward sampling parameters, so the configured values are silently ignored
+(no error, no effect). `info` is advisory and never counts as a failure. The
+heuristic can miss a request assembled through variables and can flag a config
+type that never reaches a request.
+
+
 ### 4.3 Group D — dynamic · sandbox smoke
 
 Runs against a **sandbox environment**, never the developer's real one, and
@@ -604,6 +638,11 @@ Specifically:
 7. **`CC5` is family policy** (§4.4).
 8. **Absence of a finding is not absence of a defect.** A `pass` means the
    stated requirement was met on the tested commit, and nothing more.
+9. **`K15` and `K16` are text heuristics.** K15 only sees call shapes present in
+   the tree (a wrapper or a request built through variables is invisible), and it
+   depends on the evaluated host version. K16 can miss a request assembled away
+   from the `temperature`/`top_p` literal and can flag a config type that never
+   reaches a request. Neither can fail a run: K15 is `warn`, K16 is `info`.
 
 ## 6. Change control
 

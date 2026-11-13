@@ -79,7 +79,7 @@ const gated = rows.filter((r) => !/^R[24] /.test(r.name))
 const failing = gated.filter((r) => r.status === 'fail' || r.status === 'error')
 const counts = gated.reduce((acc, r) => ({ ...acc, [r.status]: (acc[r.status] ?? 0) + 1 }), {})
 
-const summary = `format=${format} gated=${gated.length} pass=${counts.pass ?? 0} warn=${counts.warn ?? 0} fail=${counts.fail ?? 0} error=${counts.error ?? 0} skip=${counts.skip ?? 0}`
+const summary = `format=${format} gated=${gated.length} pass=${counts.pass ?? 0} warn=${counts.warn ?? 0} info=${counts.info ?? 0} fail=${counts.fail ?? 0} error=${counts.error ?? 0} skip=${counts.skip ?? 0}`
 console.log(`dsh-plugin-doctor: ${summary}`)
 
 const out = process.env.GITHUB_OUTPUT

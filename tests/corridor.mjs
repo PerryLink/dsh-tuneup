@@ -124,11 +124,16 @@ check('parseRange("||") → null', parseRange('||'), null)
   // 官方至今**没有**发布 0.2.x 稳定版 —— 这是事实，不是 bug。测试钉住它，
   // 免得以后有人"顺手"把 0.2.0 加进清单，从而让 latestStable 谎报一个不存在的版本。
   check('currentHosts().latestStable 为 null（0.2 线尚无稳定发布）', cur.latestStable, null)
-  check(`currentHosts().latest 是最高的已发布版本（${cur.latest}）`, cur.latest, '0.2.1-alpha.1')
+  check(`currentHosts().latest 是最高的已发布版本（${cur.latest}）`, cur.latest, '0.2.2-rc.3')
   check('currentHosts().latestPrerelease 是预发布版', /-/.test(cur.latestPrerelease ?? ''), true)
-  check('PUBLISHED_HOST_VERSIONS 含 0.2.1-alpha.1（本机运行宿主）', PUBLISHED_HOST_VERSIONS.includes('0.2.1-alpha.1'), true)
-  // 同线代表版本必须是该线最高者：0.2 线是 0.2.1-alpha.1，不是 0.2.0-rc.2
-  check('0.2 线代表版本 = 0.2.1-alpha.1（semver 比较，不是字符串比较）', refs.includes('0.2.1-alpha.1'), true)
+  check('currentHosts().latestPrerelease 也是 0.2.2-rc.3', cur.latestPrerelease, '0.2.2-rc.3')
+  // 既有行必须保留：0.2.1-alpha.1 仍是真实存在过的宿主，只是不再是最高版本。
+  check('PUBLISHED_HOST_VERSIONS 仍含 0.2.1-alpha.1（保留既有行）', PUBLISHED_HOST_VERSIONS.includes('0.2.1-alpha.1'), true)
+  check('PUBLISHED_HOST_VERSIONS 含 0.2.2-rc.1 / rc.2 / rc.3',
+    ['0.2.2-rc.1', '0.2.2-rc.2', '0.2.2-rc.3'].every((v) => PUBLISHED_HOST_VERSIONS.includes(v)), true)
+  // 同线代表版本必须是该线最高者：0.2 线现在是 0.2.2-rc.3，不是 0.2.1-alpha.1
+  check('0.2 线代表版本 = 0.2.2-rc.3（semver 比较，不是字符串比较）', refs.includes('0.2.2-rc.3'), true)
+  check('0.2.1-alpha.1 不再作为 0.2 线代表（被同线更高版本取代）', refs.includes('0.2.1-alpha.1'), false)
   check('0.2.0-rc.2 不作为 0.2 线代表（被同线更高版本取代）', refs.includes('0.2.0-rc.2'), false)
   check('HOST_LINES_AS_OF 是日期字符串', /^\d{4}-\d{2}-\d{2}$/.test(HOST_LINES_AS_OF), true)
 }

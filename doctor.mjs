@@ -20,10 +20,11 @@ import { deriveStandards } from './lib/standards.mjs'
 
 const VERSION = JSON.parse(readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf8')).version
 const SCHEMA_VERSION = '2'
-// K10–K13 = 交叉干扰组（waterfall 委托 / 工具名遮蔽 / 服务键双提供 / 覆写内置行）。
-// 它们是 warn 级启发式，与 K1–K9 同属 K 组，因此不新增分组、不改 --only 语义；
+// K10–K13 = 交叉干扰组（waterfall 委托 / 工具名遮蔽 / 服务键双提供 / 覆写内置行）；
+// K14 = 跨仓注入点；K15–K16 = 宿主迁移（嵌套 activation spec / 思考模式采样参数）。
+// 它们都是 warn 或 info 级启发式，与 K1–K9 同属 K 组，因此不新增分组、不改 --only 语义；
 // 下游仓的 plugin-doctor.yml 吃分组名而不是 checkset 串，兼容。
-const CHECKSET = 'R0-R8+K1-K14+D0-D3,D9+CC1-CC5/3+X1-X5'
+const CHECKSET = 'R0-R8+K1-K16+D0-D3,D9+CC1-CC5/3+X1-X5'
 const QUARANTINE_PREFIX = 'doctor-quarantine-'
 
 const USAGE = `dsh-plugin-doctor ${VERSION} —— dsh 插件完整性 + 运行流畅一体检测器
@@ -35,6 +36,8 @@ const USAGE = `dsh-plugin-doctor ${VERSION} —— dsh 插件完整性 + 运行�
   --workspace, -w <路径> 兄弟仓所在工作区根（用于 CC 组核对本地清单；缺省=工具自身父目录）
   --no-smoke        跳过动态沙箱冒烟（默认执行；需网络 + pnpm）
   --no-host         跳过 X 组（动态面·宿主契约：peer 走廊 / inject 服务面 / patch 可定位性）
+  --no-nested-activation  关闭 K15（嵌套 activation spec 检查；默认开）
+  --no-thinking     关闭 K16（思考模式下 temperature/top_p 的误用检查；默认开）
   --host <版本>     把该宿主版本并入 X1 的求值集合（可重复；用于"我还想支持这条线"的场景）
   --dsh-install <路径> 指定一份 dsh 安装目录（默认自动探测：本工具自身、DSH_INSTALL_DIR、全局 npm 前缀）
   --dsh <版本>      D 组冒烟要安装的宿主版本。
@@ -52,7 +55,7 @@ const USAGE = `dsh-plugin-doctor ${VERSION} —— dsh 插件完整性 + 运行�
   --allow-degraded  允许「被请求的组整组未真跑」时仍返回 0（默认返回 6）
   --json <路径|->   另存 JSON 报告；传 "-" 写 stdout（此时抑制人类可读报告）
   --format <名称>   JSON 报告的形态（默认 doctor）:
-                      doctor = 本工具的完整信封（5 种状态、退出码 3/4/5/6、逐项 id/分组/覆盖率）
+                      doctor = 本工具的完整信封（6 种状态、退出码 3/4/5/6、逐项 id/分组/覆盖率）
                       check  = 生态正在收敛的三值契约（PASS/WARN/FAIL + 0/1/2），
                                见 RFC #1846。供其它 check 工具与 Action 直接消费；
                                本工具的语义差异（尤其 skip != pass）在 doctor 字段里保留，
@@ -100,7 +103,7 @@ function parseArgs(argv) {
   const opts = {
     repo: null, workspace: null, smoke: true, hostGroup: true, dshVersion: null, json: null,
     groups: null, help: false, version: false, allowDegraded: false, purge: null,
-    format: 'doctor', hosts: [], dshInstall: null,
+    format: 'doctor', hosts: [], dshInstall: null, nestedActivation: true, thinking: true,
   }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
@@ -108,6 +111,8 @@ function parseArgs(argv) {
     else if (a === '--workspace' || a === '-w') opts.workspace = argv[++i]
     else if (a === '--no-smoke') opts.smoke = false
     else if (a === '--no-host') opts.hostGroup = false
+    else if (a === '--no-nested-activation') opts.nestedActivation = false
+    else if (a === '--no-thinking') opts.thinking = false
     else if (a === '--dsh') opts.dshVersion = argv[++i]
     else if (a === '--host') opts.hosts.push(String(argv[++i] ?? ''))
     else if (a === '--dsh-install') opts.dshInstall = argv[++i]
@@ -182,6 +187,8 @@ function main() {
     dshInstall,
     dshInstallVersion,
     hostVersions: opts.hosts.filter(Boolean),
+    nestedActivation: opts.nestedActivation,
+    thinking: opts.thinking,
   }
 
   const doctor = new Doctor()

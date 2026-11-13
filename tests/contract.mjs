@@ -2,7 +2,7 @@
 //
 // 为什么需要它：家族 37 仓的 .github/workflows/plugin-doctor.yml 只做四件事 ——
 //   ① stdout 含 "R0 "  ② stdout 含 "K1 "  ③ doctor.json 的 .results 是扁平数组
-//   ④ results[].name 以 ^R[24] 前缀的条目被排除在门禁外，其余条目 status ∈ {pass,warn,skip}
+//   ④ results[].name 以 ^R[24] 前缀的条目被排除在门禁外，其余条目 status ∈ {pass,warn,info,skip}
 // 任何一次"顺手清理"（例如把 ID 从 name 里拆走、给 --quiet 让 stdout 变干净）都会让 37/37 仓
 // 同时硬红。本测试把这些观测固化成断言，改工具前先跑它。
 //
@@ -134,18 +134,19 @@ const results = base.report?.results ?? []
 assert('stdout 含 "R0 "', base.stdout.includes('R0 '))
 assert('stdout 含 "K1 "', base.stdout.includes('K1 '))
 
-// ── 观测 3：.results 是扁平数组，gated=21、buildDep=2 ──────────────────────
+// ── 观测 3：.results 是扁平数组，gated=23、buildDep=2 ──────────────────────
 // gated 从 16 升到 21：K 组新增交叉干扰项 K10–K13 与跨仓项 K14（共 5 项）。
+// 0.8.3 再升到 23：K15（嵌套 activation spec）与 K16（temperature/top_p 误用）。
 assert('.results 是数组', Array.isArray(base.report?.results))
 const gated = results.filter((x) => !/^R[24] /.test(x.name))
 const buildDep = results.filter((x) => /^R[24] /.test(x.name))
-assert('gated 计数 = 21', gated.length === 21, `实际 ${gated.length}`)
+assert('gated 计数 = 23', gated.length === 23, `实际 ${gated.length}`)
 assert('R2/R4 前缀被排除（buildDep=2）', buildDep.length === 2, `实际 ${buildDep.length}`)
 
-// ── 观测 4：gated 条目 status ∈ {pass,warn,skip}，干净 fixture 无 fail/error ─
+// ── 观测 4：gated 条目 status ∈ {pass,warn,info,skip}，干净 fixture 无 fail/error ─
 const badGated = gated.filter((x) => x.status === 'fail' || x.status === 'error')
 assert('gated 无 fail/error（干净 fixture）', badGated.length === 0, badGated.map((x) => x.name).join(', '))
-assert('gated status 全在允许集合内', gated.every((x) => ['pass', 'warn', 'skip'].includes(x.status)))
+assert('gated status 全在允许集合内', gated.every((x) => ['pass', 'warn', 'info', 'skip'].includes(x.status)))
 
 // ── 观测 6：未构建的源码树上 R2/R4 属「环境」而非「插件缺陷」───────────────
 // 这两项读构建产物；仓库不提交产物时它们缺席是构造性的，不是缺陷。

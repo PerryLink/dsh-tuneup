@@ -13,6 +13,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { toContract } from '../lib/compat.mjs'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
 const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'doctor-compat-'))
@@ -151,6 +152,17 @@ function parseContract(extra, repo) {
 {
   const r = run(good, ['--format', 'check', '--json', '-'], { only: 'NOPE' })
   assert('无分组匹配时退出码 2', r.exit === 2, `实际 ${r.exit}`)
+}
+
+// ---- info is advisory, not a failure, and must stay visible -----------------
+{
+  const projection = toContract({
+    results: [{ name: 'K16 fixture', status: 'info', message: 'advisory', id: 'K16', groupId: 'K' }],
+    degraded: [], repoPath: '', doctorVersion: 'test',
+  })
+  assert('info 在三值契约中映射为 PASS', projection.checks[0]?.status === 'PASS', `实际 ${projection.checks[0]?.status}`)
+  assert('info 的 doctorStatus 被保留（不静默抹平）', projection.checks[0]?.doctorStatus === 'info', `实际 ${projection.checks[0]?.doctorStatus}`)
+  assert('info 不会让契约视图 ok=false', projection.ok === true, `实际 ${projection.ok}`)
 }
 
 // ---- output -----------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-clinic-hero-en-dark.webp">
-  <img src="docs/assets/dsh-clinic-hero-en-light.webp" width="100%" alt="dsh-clinic: accept a DSH plugin in one run — package structure, cordis contract, sandbox boot and listing checks, graded into five states and exit codes 0–6">
+  <img src="docs/assets/dsh-clinic-hero-en-light.webp" width="100%" alt="dsh-clinic: accept a DSH plugin in one run — package structure, cordis contract, sandbox boot and listing checks, graded into six states and exit codes 0–6">
 </picture>
 
 # dsh-clinic
@@ -33,7 +33,7 @@ dsh plugin --profile <name> add dsh-clinic
 
 ## What it is
 
-`dsh-clinic` splits "can this plugin be installed, can it boot, will a directory reject it" into four readable layers: **R package structure → K cordis contracts → D sandbox smoke → CC directory listings**. R and K read only the committed tree — no dependency install, no network; D really runs `npm pack` and boots a keyless profile in a one-shot sandbox up to the model request; CC checks the real constraints of five ecosystem directories/registries. One run yields a five-state verdict (pass / warn / skip / fail / error) and seven exit codes, so CI can branch on the code.
+`dsh-clinic` splits "can this plugin be installed, can it boot, will a directory reject it" into four readable layers: **R package structure → K cordis contracts → D sandbox smoke → CC directory listings**. R and K read only the committed tree — no dependency install, no network; D really runs `npm pack` and boots a keyless profile in a one-shot sandbox up to the model request; CC checks the real constraints of five ecosystem directories/registries. One run yields a six-state verdict (pass / warn / info / skip / fail / error) and seven exit codes, so CI can branch on the code.
 
 The criteria are not improvised: they come from three first-hand research tracks dated 2026-09-07 — the deepseek-harness docs and source, the cordiverse/cordis source contracts, and an inventory of every distribution channel in the workspace (full text and every citation in [`SURVEY.md`](SURVEY.md)). It does not replace tests and is not a security audit: it turns what can be judged statically into a reproducible gate.
 
@@ -48,11 +48,11 @@ In 2026-11 this repository was renamed from **`@perrylink/dsh-plugin-doctor`** t
 - Ten GitHub repos carry `dsh-plugin-doctor` in their name (eight exactly), e.g. `zoahdev/dsh-plugin-doctor` (GitHub-only, never published to npm).
 - [`dsh-testkit`](https://github.com/PerryLink/dsh-testkit)'s README links the old name to the zoahdev repo; that has nothing to do with this one.
 
-In one line: **zero-dependency, offline-capable (`--only R,K`), and it turns the cordis v4 contracts (K1–K9) and five ecosystem directory listings (CC1–CC5) into a CI gate whose verdict is readable from the exit code.** (No "the only" style claim — merely that nothing comparable appeared within the set of tools actually surveyed.)
+In one line: **zero-dependency, offline-capable (`--only R,K`), and it turns the cordis v4 contracts (K1–K16) and five ecosystem directory listings (CC1–CC5) into a CI gate whose verdict is readable from the exit code.** (No "the only" style claim — merely that nothing comparable appeared within the set of tools actually surveyed.)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-clinic-flow-v5-dark.svg">
-  <img src="docs/assets/dsh-clinic-flow-v5-light.svg" width="100%" alt="dsh-clinic structure (a funnel): five evidence feeds R/K/D/CC/X pour into one funnel, each check lands in one of five states, the worst state sets the verdict, and the spout yields exit codes 0–6">
+  <img src="docs/assets/dsh-clinic-flow-v5-light.svg" width="100%" alt="dsh-clinic structure (a funnel): five evidence feeds R/K/D/CC/X pour into one funnel, each check lands in one of six states, the worst state sets the verdict, and the spout yields exit codes 0–6">
 </picture>
 
 ## Three-step setup
@@ -103,7 +103,7 @@ Expected output (the CLI reports in Chinese):
 The same checks have two entry points: the CLI (`doctor.mjs`, with exit codes) and the host half (`plugin_doctor` tool / `/doctor` command, returning the full report). Four core groups:
 
 - **R | package structure (R0–R8)** — base fields; the activation gate `dsh.bundle.patch` (critical); whether `npm pack --dry-run` carries the entry and the patch; `cordis.patch.yml` structure; entry `name`/`apply` exports; rescoped dependency policy; `engines` alignment; prebuild + `files` allowlist; leftover old-rc peers.
-- **K | cordis contracts (K1–K9)** — service access vs `inject` declaration; the `ctx` live-data serialization red line; timers/listeners not wrapped in `ctx.effect`; Schema containing a function; `apply` return shape (the v4 Effect contract); `inject` service-name seam; v3 legacy APIs; Config must be a Standard Schema; the `name==='apply'` special case.
+- **K | cordis contracts (K1–K16)** — service access vs `inject` declaration; the `ctx` live-data serialization red line; timers/listeners not wrapped in `ctx.effect`; Schema containing a function; `apply` return shape (the v4 Effect contract); `inject` service-name seam; v3 legacy APIs; Config must be a Standard Schema; the `name==='apply'` special case; K15 nested activation spec (host ≥ 0.2.2-rc.3 flattened it, so a prompt inside request stops working); K16 temperature/top_p without reasoningEffort under thinking mode (silently ignored, INFO).
 - **D | sandbox smoke (D0–D3, D9)** — `npm pack` → `dsh plugin --profile headless add <tarball>` → assert the profile's bundles contain the package name → `--dump-config` layer marker → keyless headless run expected to **exit 1 + `dsh: MISSING_CREDENTIAL`** (the composition booted as far as a model request) → sandbox cleanup.
 - **CC | directory listings (CC1–CC5)** — the certification registry spec v1 five-dimension evidence; adp-list yml fields/enums/descriptions; dsh-catalog entry constraints (install commands forbidden, truncation heuristics); the omdsh `dshWorkshop` activation five values; the dsh-plugin-kit three gates (license / five-language README / the three seam roles).
 - **X | host contracts (supplementary evidence)** — peer corridor, `inject` service surface, patch-row locatability; degrades when no dsh install can be read and never pretends to pass.
@@ -115,7 +115,7 @@ The same checks have two entry points: the CLI (`doctor.mjs`, with exit codes) a
 | Group | Checks | What the criteria cover |
 |---|---|---|
 | static · package structure | R0–R8 | base fields; **the activation gate `dsh.bundle.patch` (critical)**; tarball contains the entry and the patch; `cordis.patch.yml` structure; entry `name`/`apply` exports; rescoped dependency policy (bare `cordis` forbidden); `engines` aligned to the official line; prebuild + `files` allowlist; leftover old-rc peers (the 2026-09-05 dual-baseline lesson) |
-| static · Cordis contract | K1–K9 | service access vs `inject` declaration; the `ctx` live-data serialization red line; timers/listeners not wrapped in `ctx.effect`; Schema containing a function; `apply` return shape (the v4 Effect contract); `inject` service-name seam; **v3 legacy APIs (the 3.x→4.x removal list)**; Config must be a Standard Schema; the `name==='apply'` special case |
+| static · Cordis contract | K1–K16 | service access vs `inject` declaration; the `ctx` live-data serialization red line; timers/listeners not wrapped in `ctx.effect`; Schema containing a function; `apply` return shape (the v4 Effect contract); `inject` service-name seam; **v3 legacy APIs (the 3.x→4.x removal list)**; Config must be a Standard Schema; the `name==='apply'` special case; K15 nested activation spec (host ≥ 0.2.2-rc.3 flattened it, so a prompt inside request stops working); K16 temperature/top_p without reasoningEffort under thinking mode (silently ignored, INFO) |
 | dynamic · sandbox smoke | D0–D3, D9 | `npm pack` → `dsh plugin --profile headless add <tarball>` → assert `dsh.profile.bundles` contains the package name → `--dump-config` layer marker → keyless headless run expected to **exit 1 + `dsh: MISSING_CREDENTIAL`** (NO_ADAPTER / ERR_MODULE_NOT_FOUND / SyntaxError / TypeError excluded) → sandbox cleanup |
 | ecosystem · directory listings | CC1–CC5 | the certification registry spec v1 five-dimension evidence; adp-list yml fields/enums/descriptions; dsh-catalog entry constraints (install commands forbidden, truncation heuristics); the omdsh `dshWorkshop` activation five values; the dsh-plugin-kit three gates (license / five-language README / the three seam roles, preferring the kit's official CLI) |
 
@@ -164,7 +164,7 @@ Coverage is written to `coverage.K` in the JSON (`{filesInspected, mode}`) and s
 | Alias | Full group name | Contents |
 |---|---|---|
 | `R` | static · package structure | R0–R8 |
-| `K` | static · Cordis contract scan | K1–K9 |
+| `K` | static · Cordis contract scan | K1–K16 |
 | `D` | dynamic · sandbox smoke | D0–D3, D9 |
 | `CC` | ecosystem · directory listings | CC1–CC5 |
 
@@ -231,7 +231,7 @@ Two honest caveats about Path A: the badge reflects *your* workflow, so it is on
 
 ### Path B — author-issued audited badge
 
-Wearing this badge means exactly one auditable thing: **the repo runs dsh-clinic's static R+K gate (16 checks: R0/R1/R3/R5/R6/R7/R8 + K1–K9) in its own CI, and that gate is green on the current HEAD of the default branch**, *as re-checked by this project's auditor*. It is **not** a certification badge: no Scorecard, no provenance, no install smoke. R2 (tarball integrity) and R4 (entry contract) read the built `lib/`, and building most family repos needs `HARNESS_COMMIT` + `gen-aliases` to pass — those two are covered by each repo's own `ci.yml` (build-drift gate + pack smoke) and are deliberately outside this gate.
+Wearing this badge means exactly one auditable thing: **the repo runs dsh-clinic's static R+K gate (23 checks: R0/R1/R3/R5/R6/R7/R8 + K1–K16) in its own CI, and that gate is green on the current HEAD of the default branch**, *as re-checked by this project's auditor*. It is **not** a certification badge: no Scorecard, no provenance, no install smoke. R2 (tarball integrity) and R4 (entry contract) read the built `lib/`, and building most family repos needs `HARNESS_COMMIT` + `gen-aliases` to pass — those two are covered by each repo's own `ci.yml` (build-drift gate + pack smoke) and are deliberately outside this gate.
 
 ```markdown
 [![dsh-doctor](https://raw.githubusercontent.com/PerryLink/dsh-clinic/main/badges/PerryLink__dsh-github.svg)](https://github.com/PerryLink/dsh-clinic/blob/main/README.en.md#verified-badges)
@@ -251,11 +251,11 @@ Wearing this badge means exactly one auditable thing: **the repo runs dsh-clinic
 
 These numbers come from **real runs**, not marketing charts. The first static R+K scan of third-party (non-PerryLink) plugins (2026-09-10, 0.2.0): **60 candidates → 20 plugins that really declare `dsh.bundle.patch` → 10 passed / 10 failed under the 16-check gate**. A re-scan of the same qualified set on 2026-09-23 with 0.3.0: **20 candidates re-scanned → 19 qualified → 6 passed / 13 failed / 0 degraded / 1 clone failure**; gated failure histogram `{"R8":9,"R3":5,"R7":3}`. **No repository regressed because of the R3/R7 fixes** — the headline movement is entirely `R8`: the minimum peer line moved on, and repos still pinning `0.1.0-rc.6` are now measurably behind. Read `R8` as **staleness, not breakage**. The full method, the per-repo table, the reproduce commands, and the correction channel are in [`THIRD-PARTY-RK-SCAN.md`](THIRD-PARTY-RK-SCAN.md); the 2026-09-10 machine-readable baseline is `data/rk-scans.json`.
 
-**It is not a certification, not a rating, and says nothing about a plugin's security**: a pass means only that "the 16 static checks reported no failure on that commit". Method: read-only clones, **zero execution** of third-party code, R2/R4 listed separately and not gated; `lib-fallback` coverage is real but not equivalent, and K3–K7 may under-report. Any repository named in the report can open an issue through the correction channel and the row is re-run and amended in place with equal prominence.
+**It is not a certification, not a rating, and says nothing about a plugin's security**: a pass means only that "the 23 static checks reported no failure on that commit". Method: read-only clones, **zero execution** of third-party code, R2/R4 listed separately and not gated; `lib-fallback` coverage is real but not equivalent, and K3–K7 may under-report. Any repository named in the report can open an issue through the correction channel and the row is re-run and amended in place with equal prominence.
 
 ## Configuration
 
-`dsh-clinic` has **no Config schema** of its own — the tunables are the CLI flags and the host half's four tool parameters. The defaults are CI-ready; an offline static gate needs only `--only R,K --no-smoke`.
+`dsh-clinic` has **no Config schema** of its own — the tunables are the CLI flags and the host half's six tool parameters. The defaults are CI-ready; an offline static gate needs only `--only R,K --no-smoke`.
 
 Common CLI flags:
 
@@ -269,6 +269,8 @@ Common CLI flags:
 | `--format check` | doctor | three-value contract view (PASS/WARN/FAIL + 0/1/2, flat `checks[]`) |
 | `--workspace <root>` | auto | family workspace holding the sibling repos (for CC1–CC5 and K14) |
 | `--allow-degraded` | off | explicitly accept "the whole group never really ran"; default is exit 6 |
+| `--no-nested-activation` | on | disable K15 (nested activation spec) |
+| `--no-thinking` | on | disable K16 (temperature/top_p misuse under thinking mode) |
 
 <details>
 <summary>Host-half parameters (<code>plugin_doctor</code> / <code>/doctor</code>)</summary>
@@ -279,6 +281,8 @@ Common CLI flags:
 | `smoke` | `false` | also run the D-group sandbox smoke (needs network + pnpm) |
 | `host` | `true` | run the X group (host-contract checks); degrades when no dsh install is readable |
 | `workspace` | auto | family workspace directory (the parent holding several `dsh-*` plugin repos) for CC1–CC5 and K14; resolved upward from the repository by default, and `DSH_WORKSPACE` also works |
+| `nestedActivation` | `true` | run K15; the CLI equivalent is `--no-nested-activation` |
+| `thinking` | `true` | run K16; the CLI equivalent is `--no-thinking` |
 
 </details>
 
@@ -391,7 +395,7 @@ lib/framework.mjs        check registration/run/verdict/rendering (zero dependen
 lib/util.mjs             temporary sandbox + subprocess execution (stdout/stderr to disk, avoiding pipe-capture limits)
 lib/workspace.mjs        family workspace resolution
 lib/checks-package.mjs   static · package structure R0–R8
-lib/checks-cordis.mjs    static · Cordis contract K1–K9
+lib/checks-cordis.mjs    static · Cordis contract K1–K16
 lib/checks-runtime.mjs   X host-contract checks
 lib/checks-smoke.mjs     dynamic · sandbox smoke D0–D3, D9
 lib/checks-collections.mjs  ecosystem · directory listings CC1–CC5
